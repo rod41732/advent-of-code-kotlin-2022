@@ -1,9 +1,7 @@
-import java.io.File
-
 fun main() {
-    val elfCalories = File("src/Day01.txt").readText().trim()
+    val elfCalories = readInputRaw("Day01").trim() // prevent trailing endline from causing problem
         .split("\n\n")
-        .map { it.split("\n").map { Integer.parseInt(it) }.sum() }
+        .map { it.split("\n").sumOf { it.toInt() } }
 
     println("Part 1")
     println(elfCalories.max())
