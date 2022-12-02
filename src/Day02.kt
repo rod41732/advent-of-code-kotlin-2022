@@ -2,10 +2,15 @@ import java.lang.Exception
 
 fun main() {
     val strategy = readInput("Day02")
-        .map { Pair(it.get(0).code - 'A'.code, it.get(2).code - 'X'.code)}
-        .also{ println(it.take(10))}
+        .map { Pair(it[0].code - 'A'.code, it[2].code - 'X'.code)}
+
 
     fun part1(strategy: List<Pair<Int, Int>>): Int {
+        // let x, y denotes Rock/Paper/Scissor of opponent and you
+        // the result will be
+        // you win IFF y - x ≡ 1 (mod 3)
+        // draw IFF y - x ≡ 1 (mod 3)
+        // you lost IFF y - x ≡ -1 (mod 3)
         return strategy.sumOf {  (x, y) ->
             val playScore = y + 1
             val outcomeScore = when ((y + 3 - x) % 3 ) {
