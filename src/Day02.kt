@@ -26,7 +26,7 @@ fun main() {
     fun part2(strategy: List<Pair<Int, Int>>): Int {
         return strategy.sumOf {  (x, y) ->
             val playScore = (x + y + 2) % 3 + 1
-            val outcomeScore = (y + 1) * 3
+            val outcomeScore = y  * 3
             playScore + outcomeScore
         }
     }
