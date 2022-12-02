@@ -1,7 +1,6 @@
 fun main() {
     val strategy = readInput("Day02")
-        .map { it[0] - 'A' to it[2] - 'X' }
-
+        .map (::parseLine)
 
     fun part1(strategy: List<Pair<Int, Int>>): Int {
         // let x, y denotes Rock/Paper/Scissor of opponent and you
@@ -27,9 +26,18 @@ fun main() {
             playScore + outcomeScore
         }
     }
+
+    val testStrategy = readInput("Day02_test")
+        .map (::parseLine)
+    check(part1(testStrategy) == 15)
+    check(part2(testStrategy) == 12)
+
     println("Part 1")
     println(part1(strategy))
 
     println("Part 2")
     println(part2(strategy))
 }
+
+
+fun parseLine(line: String): Pair<Int, Int> =  line[0] - 'A' to line[2] - 'X'
