@@ -16,6 +16,12 @@ fun main() {
         }
         return heap.sum()
     }
+    val testElfCalories = readInputRaw("Day01_test").trim() // prevent trailing endline from causing problem
+        .split("\n\n")
+        .map { it.split("\n").sumOf { it.toInt() } }
+    check(part1(testElfCalories) == 24000)
+    check(part2(testElfCalories) == 45000)
+
 
     println("Part 1")
     println(part1(elfCalories))
