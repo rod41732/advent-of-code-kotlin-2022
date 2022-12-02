@@ -1,8 +1,6 @@
-import java.lang.Exception
-
 fun main() {
     val strategy = readInput("Day02")
-        .map { Pair(it[0].code - 'A'.code, it[2].code - 'X'.code)}
+        .map { it[0] - 'A' to it[2] - 'X' }
 
 
     fun part1(strategy: List<Pair<Int, Int>>): Int {
@@ -11,22 +9,21 @@ fun main() {
         // you win IFF y - x ≡ 1 (mod 3)
         // draw IFF y - x ≡ 1 (mod 3)
         // you lost IFF y - x ≡ -1 (mod 3)
-        return strategy.sumOf {  (x, y) ->
+        return strategy.sumOf { (x, y) ->
             val playScore = y + 1
-            val outcomeScore = when ((y + 3 - x) % 3 ) {
+            val outcomeScore = when ((y - x).mod(3)) {
                 1 -> 6
                 0 -> 3
-                2 -> 0
-                else -> throw Exception("Unreachable!")
+                else -> 0
             }
             playScore + outcomeScore
         }
     }
 
     fun part2(strategy: List<Pair<Int, Int>>): Int {
-        return strategy.sumOf {  (x, y) ->
-            val playScore = (x + y + 2) % 3 + 1
-            val outcomeScore = y  * 3
+        return strategy.sumOf { (x, y) ->
+            val playScore = (x + y - 1).mod(3) + 1
+            val outcomeScore = y * 3
             playScore + outcomeScore
         }
     }
