@@ -6,7 +6,9 @@ fun main() {
         .map { it.split("\n").sumOf { it.toInt() } }
 
     fun part1(eachElfCalories: List<Int>) = eachElfCalories.max()
+
     fun part2(eachElfCalories: List<Int>) = eachElfCalories.sortedDescending().take(3).sum()
+
     fun part2Faster(eachElfCalories: List<Int>): Int {
         val heap = PriorityQueue(Int::compareTo)
         eachElfCalories.forEach {
@@ -16,6 +18,8 @@ fun main() {
         }
         return heap.sum()
     }
+
+    // test cases
     val testElfCalories = readInputRaw("Day01_test").trim() // prevent trailing endline from causing problem
         .split("\n\n")
         .map { it.split("\n").sumOf { it.toInt() } }

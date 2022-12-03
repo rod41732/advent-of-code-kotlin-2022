@@ -8,9 +8,9 @@ fun main() {
         // you win IFF y - x ≡ 1 (mod 3)
         // draw IFF y - x ≡ 1 (mod 3)
         // you lost IFF y - x ≡ -1 (mod 3)
-        return strategy.sumOf { (x, y) ->
-            val playScore = y + 1
-            val outcomeScore = when ((y - x).mod(3)) {
+        return strategy.sumOf { (opponent, player) ->
+            val playScore = player + 1
+            val outcomeScore = when ((player - opponent).mod(3)) {
                 1 -> 6
                 0 -> 3
                 else -> 0
@@ -20,9 +20,9 @@ fun main() {
     }
 
     fun part2(strategy: List<Pair<Int, Int>>): Int {
-        return strategy.sumOf { (x, y) ->
-            val playScore = (x + y - 1).mod(3) + 1
-            val outcomeScore = y * 3
+        return strategy.sumOf { (opponent, outcome) ->
+            val playScore = (opponent + outcome - 1).mod(3) + 1
+            val outcomeScore = outcome * 3
             playScore + outcomeScore
         }
     }
