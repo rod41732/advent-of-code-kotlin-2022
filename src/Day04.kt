@@ -35,7 +35,7 @@ fun <T> Iterable<T>.toPair(): Pair<T, T> {
 }
 
 fun Pair<Int, Int>.contains(other: Pair<Int, Int>): Boolean {
-    return first <= other.first && second >= other.second
+    return (first .. second) .let { it.contains(other.first) && it.contains(other.second)}
 }
 
 fun Pair<Int, Int>.overlaps(other: Pair<Int, Int>): Boolean {
