@@ -1,14 +1,15 @@
 fun main() {
     val f = readInput("Day04")
 
-    fun parseLine(line: String): List<Pair<Int, Int>> {
-        return line.split(',').map { it.split('-').map { it.toInt() }.toPair() }
+    fun parseLine(line: String): List<IntRange> {
+        return line.split(',')
+            .map { it.split('-').map { it.toInt() }.let { (x, y) -> x..y } }
     }
 
     fun part1(input: List<String>): Int {
         return input
             .map(::parseLine)
-            .count { (x, y) -> x.contains(y) || y.contains(x)}
+            .count { (x, y) -> x.contains(y) || y.contains(x) }
     }
 
     fun part2(input: List<String>): Int {
@@ -29,16 +30,6 @@ fun main() {
     println(part2(f))
 }
 
-// convert iterable to pair, it's assumed that the iterable's length is 2
-fun <T> Iterable<T>.toPair(): Pair<T, T> {
-    return zipWithNext()[0]
-}
-
-fun Pair<Int, Int>.contains(other: Pair<Int, Int>): Boolean {
-    return (first .. second) .let { it.contains(other.first) && it.contains(other.second)}
-}
-
-fun Pair<Int, Int>.overlaps(other: Pair<Int, Int>): Boolean {
-    return (first .. second).contains(other.first) || (other.first .. other.second).contains(first)
-}
+fun IntRange.contains(other: IntRange): Boolean = other.first in this && other.last in this
+fun IntRange.overlaps(other: IntRange): Boolean = other.first in this || other.last in this  || other.contains(this)
 
