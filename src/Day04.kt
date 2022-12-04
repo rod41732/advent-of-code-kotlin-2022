@@ -30,6 +30,12 @@ fun main() {
     println(part2(f))
 }
 
+/* returns whether a range contains other range as "subrange". Example:
+ *          <------------>      A
+ *            <-------->        subrange of A
+ *      <------->               not subrange of A
+ *     <--------------------->  not subrange of A, and A is subrange of this
+ */
 fun IntRange.contains(other: IntRange): Boolean = other.first in this && other.last in this
 fun IntRange.overlaps(other: IntRange): Boolean = other.first in this || other.last in this  || other.contains(this)
 
