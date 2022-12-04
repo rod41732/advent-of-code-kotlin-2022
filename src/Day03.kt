@@ -23,5 +23,5 @@ fun main() {
 
 fun calculatePriority(char: Char): Int = (char.lowercaseChar() - 'a') + 1 + if (char.isUpperCase()) 26 else 0
 fun commonChar(strings: Iterable<String>): Char {
-    return strings.map { it.toSet() }.reduce { acc, it -> acc.intersect(it) }.first()
+    return strings.map { it.toSet() }.reduce { acc, it -> acc intersect it }.first()
 }
