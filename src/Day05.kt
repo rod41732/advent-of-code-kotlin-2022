@@ -14,7 +14,7 @@ fun main() {
     fun part2(lines: List<String>): String {
         val (stacks, operations) = parseInput(lines)
         operations.forEach { (num, src, dst) ->
-            val lastN = (0..num - 1).map { stacks[src].removeLast() }.reversed()
+            val lastN = List(num) { stacks[src].removeLast() }.reversed()
             stacks[dst].addAll(lastN)
         }
         return stacks.map { it.last() }.joinToString("")
@@ -45,7 +45,7 @@ private fun splitInput(lines: List<String>): Pair<List<String>, List<String>> {
 
 private fun parseStacks(stackInput: List<String>): List<MutableList<Char>> {
     val count = stackInput.last().count { it != ' ' }
-    val stacks = (0..count - 1).map { mutableListOf<Char>() }
+    val stacks = List(count) { mutableListOf<Char>() }
     stackInput.dropLast(1).reversed().forEach { line ->
         // NOTE: this won't work if number of stacks >= 10
         line.slice(1..line.length step 4).forEachIndexed { i, char ->
