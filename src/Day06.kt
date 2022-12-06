@@ -1,23 +1,27 @@
+class Multiset<T> {
+    private val unique: MutableSet<T> = mutableSetOf()
+    private val count: MutableMap<T, Int> = mutableMapOf()
+    fun add(v: T) {
+        count[v] = (count[v] ?: 0) + 1
+        if (count[v] == 1) unique.add(v)
+    }
+
+    fun remove(v: T) {
+        count[v] = (count[v] ?: 0) - 1
+        if (count[v] == 0) unique.remove(v)
+    }
+
+    val items: Set<T> get() = unique.toSet()
+}
 fun main() {
     val line = readInput("Day06")[0]
 
     fun solve(text: String, uniqueCount: Int): Int {
-        val count = mutableMapOf<Char, Int>()
-        var uniqueCharCount = 0
-//        text.zip(text, " ".repeat(uniqueCount ) + text.substring(uniqueCount) ).
-        text.forEachIndexed { i, newChar ->
-            count[newChar] = (count[newChar] ?: 0) + 1
-            if (count[newChar] == 1) uniqueCharCount += 1
-
-            if (i >= uniqueCount) {
-                val oldChar = text[i - uniqueCount]
-                count[oldChar] = count[oldChar]!! - 1
-                if (count[oldChar] == 0) uniqueCharCount -= 1
-            }
-
-            if (uniqueCharCount == uniqueCount) return i + 1
-        }
-        return -1
+        val s = Multiset<Char>()
+        return text.zip("_".repeat(uniqueCount) + text).indexOfFirst { (new, old) ->
+            s.add(new); s.remove(old)
+            s.items.size == uniqueCount
+        } + 1
     }
 
     /** shorter implementation but "less efficient" (won't matter for this small input anyway) */
@@ -28,6 +32,7 @@ fun main() {
     fun part1(text: String) = solve(text, 4)
     fun part2(text: String) = solve(text, 14)
 
+    print(part1("bwbjplbgvbhsrlpgdmjqwftvncz"))
     check(part1("bwbjplbgvbhsrlpgdmjqwftvncz") == 5)
     check(part1("nppdvjthqldpwncqszvftbrmjlhg") == 6)
     check(part1("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg") == 10)
