@@ -1,6 +1,6 @@
 import kotlin.math.min
 
-data class Node(
+private data class Node(
     val name: String,
     val size: Int,
     val parent: Node? = null,
@@ -11,19 +11,19 @@ data class Node(
 }
 
 
-fun sumSmallDirectories(node: Node, sizeThres: Int): Int {
+private fun sumSmallDirectories(node: Node, sizeThres: Int): Int {
     if (!node.isDir()) return 0
     val currentDir = if (node.totalSize <= sizeThres) node.totalSize else 0
     return currentDir + node.children.sumOf { sumSmallDirectories(it, sizeThres) }
 }
 
-fun smallestDirectoryToDelete(node: Node, sizeMin: Int): Int {
+private fun smallestDirectoryToDelete(node: Node, sizeMin: Int): Int {
     if (!node.isDir()) return Int.MAX_VALUE
     return min(if (node.totalSize < sizeMin) Int.MAX_VALUE else node.totalSize,
         node.children.minOf { smallestDirectoryToDelete(it, sizeMin) })
 }
 
-fun buildDirectoryTree(input: List<String>): Node {
+private fun buildDirectoryTree(input: List<String>): Node {
     val root = Node("/", 0)
     var currentNode = root
     input.forEach {
@@ -56,8 +56,9 @@ fun buildDirectoryTree(input: List<String>): Node {
     return root
 }
 
-const val DISK_SIZE = 70000000
-const val TARGET_FREE_SPACE = 30000000
+private const val DISK_SIZE = 70000000
+private const val TARGET_FREE_SPACE = 30000000
+
 fun main() {
     fun part1(input: List<String>): Int {
         val root = buildDirectoryTree(input)
