@@ -67,6 +67,7 @@ private data class Tree(
                 stack.push(height to 1)
                 return stack to 0
             }
+
             else -> calculateScenicAcc(next.scenicSide(side))
         }
     }
@@ -100,8 +101,7 @@ fun main() {
 
 private fun parseGrid2(map: List<String>): List<Tree> {
     val tmp = map.map { it.map { char -> char - '0' }.map { Tree(it) } }
-    tmp.forEachIndexed { i, row -> row.zipWithNext().forEach { (prev, cur) -> cur.left = prev; prev.right = cur } }
-    tmp.transpose()
-        .forEachIndexed { i, row -> row.zipWithNext().forEach { (prev, cur) -> cur.up = prev; prev.down = cur } }
+    tmp.forEach { row -> row.zipWithNext().forEach { (prev, cur) -> cur.left = prev; prev.right = cur } }
+    tmp.transpose().forEach { row -> row.zipWithNext().forEach { (prev, cur) -> cur.up = prev; prev.down = cur } }
     return tmp.flatten()
 }
