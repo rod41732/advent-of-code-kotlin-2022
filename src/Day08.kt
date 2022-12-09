@@ -1,27 +1,93 @@
 import java.util.Stack
 import kotlin.math.max
 
+typealias ScenicState = Pair<Stack<Pair<Int, Int>>, Int>
+
+private enum class Direction { UP, DOWN, LEFT, RIGHT }
+
+private data class Tree(
+    val height: Int,
+    var up: Tree? = null,
+    var down: Tree? = null,
+    var left: Tree? = null,
+    var right: Tree? = null,
+) {
+    val maxUp: Int by lazy { maxSeenTree(Direction.UP) }
+    val maxDown: Int by lazy { maxSeenTree(Direction.DOWN) }
+    val maxLeft: Int by lazy { maxSeenTree(Direction.LEFT) }
+    val maxRight: Int by lazy { maxSeenTree(Direction.RIGHT) }
+
+    val scenicUp: ScenicState by lazy { scenicSide(Direction.UP) }
+    val scenicDown: ScenicState by lazy { scenicSide(Direction.DOWN) }
+    val scenicLeft: ScenicState by lazy { scenicSide(Direction.LEFT) }
+    val scenicRight: ScenicState by lazy { scenicSide(Direction.RIGHT) }
+
+    val visible: Boolean by lazy { listOf(maxUp, maxDown, maxLeft, maxRight).any { it < height } }
+
+    val scenicScore: Int by lazy {
+        listOf(scenicUp, scenicDown, scenicLeft, scenicRight).map { it.second }.reduce { acc, it -> acc * it }
+    }
+
+    private fun nextTree(side: Direction): Tree? {
+        return when (side) {
+            Direction.UP -> up
+            Direction.DOWN -> down
+            Direction.LEFT -> left
+            Direction.RIGHT -> right
+        }
+    }
+
+    private fun maxSeenTree(side: Direction): Int {
+        val next = nextTree(side)
+        return when (next) {
+            null -> -1
+            else -> max(next.maxSeenTree(side), next.height)
+        }
+    }
+
+    private fun scenicInit(): ScenicState {
+        val stack = Stack<Pair<Int, Int>>()
+        stack.push(height to 1)
+        return stack to 0
+    }
+
+    private fun calculateScenicAcc(prev: ScenicState): ScenicState {
+        val (s, _) = prev
+        var popped = 0
+        while (!s.empty()) {
+            val top = s.peek()
+            if (top.first < height) {
+                s.pop()
+                popped += top.second
+            } else {
+                break
+            }
+        }
+        val seen = popped + (if (s.isEmpty()) 0 else 1)
+        s.push(height to popped + 1)
+        return s to seen
+    }
+
+    private fun scenicSide(side: Direction): ScenicState {
+        val next = nextTree(side)
+        return when (next) {
+            null -> scenicInit()
+            else -> calculateScenicAcc(next.scenicSide(side))
+        }
+    }
+}
+
 fun main() {
     val input = readInput("Day08")
 
     fun part1(input: List<String>): Int {
-        val map = parseGrid(input)
-        val left = accMaxFromLeft(map)
-        val right = accMaxFromRight(map)
-        val down = accMaxFromDown(map)
-        val up = accMaxFromUp(map)
-        val sides = listOf(up, down, left, right)
-        return map.countIndexed { i, j, v -> sides.any { it[i][j] < v } }
+        val trees = parseGrid2(input)
+        return trees.count { it.visible }
     }
 
     fun part2(input: List<String>): Int {
-        val map = parseGrid(input)
-        val up = scenicUp(map)
-        val down = scenicDown(map)
-        val left = scenicLeft(map)
-        val right = scenicRight(map)
-        val sides = listOf(up, down, left, right)
-        return map.maxOfIndexed { i, j, _ -> sides.map { it[i][j] }.reduce { acc, it -> acc * it } }
+        val trees = parseGrid2(input)
+        return trees.maxOf { it.scenicScore }
     }
 
     val testInput = readInput("Day08_test")
@@ -37,88 +103,10 @@ fun main() {
     println(part2(input))
 }
 
-
-private typealias Grid2D = List<List<Int>>
-
-private fun Grid2D.countIndexed(pred: (i: Int, j: Int, v: Int) -> Boolean): Int {
-    return sumOfIndexed { i, row -> row.countIndexed { j, it -> pred(i, j, it) } }
-}
-
-private fun Grid2D.maxOfIndexed(apply: (i: Int, j: Int, v: Int) -> Int): Int {
-    return maxOfIndexed { i, row -> row.maxOfIndexed { j, it -> apply(i, j, it) } }
-}
-
-private fun Grid2D.transpose(): Grid2D {
-    return List(this[0].size) { colId ->
-        map { row -> row[colId] }
-    }
-}
-
-
-private fun parseGrid(map: List<String>): Grid2D {
-    return map.map { it.map { char -> char - '0' } }
-}
-
-private fun accMaxFromLeft(map: Grid2D): Grid2D {
-    return map.map { row ->
-        row.dropLast(1).runningFold(-1) { maxSoFar, num -> max(num, maxSoFar) }
-    }
-}
-
-private fun accMaxFromRight(map: Grid2D): Grid2D {
-
-    return map.map { row ->
-        row.reversed().dropLast(1).runningFold(-1) { maxSoFar, num -> max(num, maxSoFar) }.reversed()
-    }
-}
-
-
-private fun accMaxFromUp(map: Grid2D): Grid2D {
-    return accMaxFromLeft(map.transpose()).transpose()
-}
-
-private fun accMaxFromDown(map: Grid2D): Grid2D {
-    return accMaxFromRight(map.transpose()).transpose()
-}
-
-
-private fun scenicLeft(map: Grid2D): Grid2D {
-    return map.map { scenic(it) }
-}
-
-private fun scenicRight(map: Grid2D): Grid2D {
-    return map.map { scenic(it.reversed()).reversed() }
-}
-
-private fun scenicUp(map: Grid2D): Grid2D {
-    return scenicLeft(map.transpose()).transpose()
-}
-
-private fun scenicDown(map: Grid2D): Grid2D {
-    return scenicRight(map.transpose()).transpose()
-}
-
-
-private fun scenic(row: List<Int>): List<Int> {
-    val s = Stack<Pair<Int, Int>>()
-    return row.map {
-        if (s.empty()) {
-            s.push(it to 1)
-            return@map 0
-        }
-        var popped = 0
-        while (!s.empty()) {
-            val top = s.peek()
-            if (top.first < it) {
-                s.pop()
-                popped += top.second
-            } else {
-                break
-            }
-        }
-        val seen = popped + (if (s.isEmpty()) 0 else 1)
-        s.push(it to popped + 1)
-        return@map seen
-    }
-
+private fun parseGrid2(map: List<String>): List<Tree> {
+    val tmp = map.map { it.map { char -> char - '0' }.map { Tree(it) } }
+    tmp.forEachIndexed { i, row -> row.zipWithNext().forEach { (prev, cur) -> cur.left = prev; prev.right = cur } }
+    tmp.transpose()
+        .forEachIndexed { i, row -> row.zipWithNext().forEach { (prev, cur) -> cur.up = prev; prev.down = cur } }
+    return tmp.flatten()
 }

@@ -29,3 +29,9 @@ fun <T> Collection<T>.countIndexed(pred: (index: Int, T) -> Boolean): Int {
 fun <T> Collection<T>.maxOfIndexed(apply: (index: Int, T) -> Int): Int {
     return withIndex().maxOf { (i, v) -> apply(i, v) }
 }
+
+fun <T> List<List<T>>.transpose(): List<List<T>> {
+    return List(this[0].size) { colId ->
+        map { row -> row[colId] }
+    }
+}
