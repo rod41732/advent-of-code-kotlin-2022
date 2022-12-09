@@ -1,6 +1,7 @@
 import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
+import kotlin.system.measureNanoTime
 
 /**
  * Reads lines from the given input txt file.
@@ -34,4 +35,13 @@ fun <T> List<List<T>>.transpose(): List<List<T>> {
     return List(this[0].size) { colId ->
         map { row -> row[colId] }
     }
+}
+
+// for benchmarking, print avg time used for specified sample sizes
+fun measureAvgTime(sampleSizes: List<Int> = listOf(1, 10, 100, 1000), block: () -> Unit): List<Pair<Int, Double>> {
+    return sampleSizes.zip(sampleSizes.map { count ->
+        measureNanoTime {
+            repeat(count) { block() }
+        } / 1e6 / count
+    })
 }
