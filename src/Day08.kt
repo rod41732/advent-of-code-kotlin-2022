@@ -1,7 +1,6 @@
 import java.util.Stack
 import kotlin.math.max
 
-private typealias Grid2D = List<List<Int>>
 fun main() {
     val input = readInput("Day08")
 
@@ -12,22 +11,7 @@ fun main() {
         val down = accMaxFromDown(map)
         val up = accMaxFromUp(map)
         val sides = listOf(up, down, left, right)
-//        sides.forEachIndexed { i, v ->
-//            println("$i $v")
-//        }
-        var cnt = 0
-        map.forEachIndexed { i, row ->
-            row.forEachIndexed { j, value ->
-                if (sides.any { it[i][j] < value }) {
-                    cnt += 1
-//                    println("$i $j visible")
-                } else {
-//                    println("$i $j not-visible")
-                }
-            }
-
-        }
-        return cnt
+        return map.countIndexed { i, j, v -> sides.any { it[i][j] < v } }
     }
 
     fun part2(input: List<String>): Int {
@@ -36,19 +20,8 @@ fun main() {
         val down = scenicDown(map)
         val left = scenicLeft(map)
         val right = scenicRight(map)
-//        listOf(left).forEachIndexed { i, it -> println("--"); it.forEach { println(it) } }
-        var maxScore = 0
-        map.forEachIndexed { i, row ->
-            row.forEachIndexed { j, _ ->
-                val score = runCatching {
-                    val res = up[i][j] * down[i][j] * left[i][j] * right[i][j]
-//                    println("$i $j is $res")
-                    res
-                }.getOrElse { 0 }
-                maxScore = max(maxScore, score)
-            }
-        }
-        return maxScore
+        val sides = listOf(up, down, left, right)
+        return map.maxOfIndexed { i, j, _ -> sides.map { it[i][j] }.reduce { acc, it -> acc * it } }
     }
 
     val testInput = readInput("Day08_test")
@@ -65,6 +38,23 @@ fun main() {
 }
 
 
+private typealias Grid2D = List<List<Int>>
+
+private fun Grid2D.countIndexed(pred: (i: Int, j: Int, v: Int) -> Boolean): Int {
+    return sumOfIndexed { i, row -> row.countIndexed { j, it -> pred(i, j, it) } }
+}
+
+private fun Grid2D.maxOfIndexed(apply: (i: Int, j: Int, v: Int) -> Int): Int {
+    return maxOfIndexed { i, row -> row.maxOfIndexed { j, it -> apply(i, j, it) } }
+}
+
+private fun Grid2D.transpose(): Grid2D {
+    return List(this[0].size) { colId ->
+        map { row -> row[colId] }
+    }
+}
+
+
 private fun parseGrid(map: List<String>): Grid2D {
     return map.map { it.map { char -> char - '0' } }
 }
@@ -76,16 +66,12 @@ private fun accMaxFromLeft(map: Grid2D): Grid2D {
 }
 
 private fun accMaxFromRight(map: Grid2D): Grid2D {
+
     return map.map { row ->
         row.reversed().dropLast(1).runningFold(-1) { maxSoFar, num -> max(num, maxSoFar) }.reversed()
     }
 }
 
-private fun Grid2D.transpose(): Grid2D {
-    return List(this[0].size) { colId ->
-        map { row -> row[colId] }
-    }
-}
 
 private fun accMaxFromUp(map: Grid2D): Grid2D {
     return accMaxFromLeft(map.transpose()).transpose()
@@ -97,10 +83,11 @@ private fun accMaxFromDown(map: Grid2D): Grid2D {
 
 
 private fun scenicLeft(map: Grid2D): Grid2D {
-    return map.map {scenic(it) }
+    return map.map { scenic(it) }
 }
+
 private fun scenicRight(map: Grid2D): Grid2D {
-    return map.map {scenic(it.reversed()).reversed() }
+    return map.map { scenic(it.reversed()).reversed() }
 }
 
 private fun scenicUp(map: Grid2D): Grid2D {
