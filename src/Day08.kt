@@ -3,7 +3,7 @@ import kotlin.math.max
 
 typealias ScenicState = Pair<Stack<Pair<Int, Int>>, Int>
 
-private enum class Direction { UP, DOWN, LEFT, RIGHT }
+private enum class Side { UP, DOWN, LEFT, RIGHT }
 
 private data class Tree(
     val height: Int,
@@ -12,15 +12,15 @@ private data class Tree(
     var left: Tree? = null,
     var right: Tree? = null,
 ) {
-    val maxUp: Int by lazy { maxSeenTree(Direction.UP) }
-    val maxDown: Int by lazy { maxSeenTree(Direction.DOWN) }
-    val maxLeft: Int by lazy { maxSeenTree(Direction.LEFT) }
-    val maxRight: Int by lazy { maxSeenTree(Direction.RIGHT) }
+    val maxUp: Int by lazy { maxSeenTree(Side.UP) }
+    val maxDown: Int by lazy { maxSeenTree(Side.DOWN) }
+    val maxLeft: Int by lazy { maxSeenTree(Side.LEFT) }
+    val maxRight: Int by lazy { maxSeenTree(Side.RIGHT) }
 
-    val scenicUp: ScenicState by lazy { scenicSide(Direction.UP) }
-    val scenicDown: ScenicState by lazy { scenicSide(Direction.DOWN) }
-    val scenicLeft: ScenicState by lazy { scenicSide(Direction.LEFT) }
-    val scenicRight: ScenicState by lazy { scenicSide(Direction.RIGHT) }
+    val scenicUp: ScenicState by lazy { scenicSide(Side.UP) }
+    val scenicDown: ScenicState by lazy { scenicSide(Side.DOWN) }
+    val scenicLeft: ScenicState by lazy { scenicSide(Side.LEFT) }
+    val scenicRight: ScenicState by lazy { scenicSide(Side.RIGHT) }
 
     val visible: Boolean by lazy { listOf(maxUp, maxDown, maxLeft, maxRight).any { it < height } }
 
@@ -28,27 +28,18 @@ private data class Tree(
         listOf(scenicUp, scenicDown, scenicLeft, scenicRight).map { it.second }.reduce { acc, it -> acc * it }
     }
 
-    private fun nextTree(side: Direction): Tree? {
+    private fun nextTree(side: Side): Tree? {
         return when (side) {
-            Direction.UP -> up
-            Direction.DOWN -> down
-            Direction.LEFT -> left
-            Direction.RIGHT -> right
+            Side.UP -> up
+            Side.DOWN -> down
+            Side.LEFT -> left
+            Side.RIGHT -> right
         }
     }
 
-    private fun maxSeenTree(side: Direction): Int {
+    private fun maxSeenTree(side: Side): Int {
         val next = nextTree(side)
-        return when (next) {
-            null -> -1
-            else -> max(next.maxSeenTree(side), next.height)
-        }
-    }
-
-    private fun scenicInit(): ScenicState {
-        val stack = Stack<Pair<Int, Int>>()
-        stack.push(height to 1)
-        return stack to 0
+        return if (next == null) -1 else max(next.maxSeenTree(side), next.height)
     }
 
     private fun calculateScenicAcc(prev: ScenicState): ScenicState {
@@ -68,10 +59,14 @@ private data class Tree(
         return s to seen
     }
 
-    private fun scenicSide(side: Direction): ScenicState {
+    private fun scenicSide(side: Side): ScenicState {
         val next = nextTree(side)
         return when (next) {
-            null -> scenicInit()
+            null -> {
+                val stack = Stack<Pair<Int, Int>>()
+                stack.push(height to 1)
+                return stack to 0
+            }
             else -> calculateScenicAcc(next.scenicSide(side))
         }
     }
