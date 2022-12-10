@@ -12,10 +12,8 @@ fun main() {
     fun part2(input: List<String>): String {
         val reg = calculateRegister(input)
         return (1..240)
-            // let's use O and space for easier reading
-            .map { time -> if (abs(reg[time] - (time - 1) % 40) <= 1) "O" else " " }
+            .joinToString("") { time -> if (abs(reg[time] - (time - 1) % 40) <= 1) "#" else "." }
             .chunked(40)
-            .map { it.joinToString("") }
             .joinToString("\n")
     }
 
@@ -29,7 +27,7 @@ fun main() {
         #####.....#####.....#####.....#####.....
         ######......######......######......####
         #######.......#######.......#######.....
-        """.trimIndent().replace('.', ' ').replace('#', 'O')
+        """.trimIndent()
     check(part2(inputTest) == part2image)
 
     println("Part 1")
