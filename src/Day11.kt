@@ -1,8 +1,8 @@
-typealias Operand = (v: Long) -> Long
+private typealias Operand = (v: Long) -> Long
 
 // ALL calculations use Long to prevent integer overflow
-enum class Operator { ADD, MUL }
-data class Expression(val left: Operand, val op: Operator, val right: Operand) {
+private enum class Operator { ADD, MUL }
+private data class Expression(val left: Operand, val op: Operator, val right: Operand) {
     fun evaluate(old: Long): Long {
         val lhs = left(old)
         val rhs = right(old)
@@ -13,7 +13,7 @@ data class Expression(val left: Operand, val op: Operator, val right: Operand) {
     }
 }
 
-data class Monkey(
+private data class Monkey(
     val items: MutableList<Long>,
     val inspectExpression: Expression,
     val testMod: Long,
@@ -39,7 +39,7 @@ data class Monkey(
     }
 }
 
-fun parseMonkey(lines: List<String>): Monkey {
+private fun parseMonkey(lines: List<String>): Monkey {
     val items = lines[1].substringAfter(": ").split(", ").map { it.toLong() }.toMutableList()
     val expression = lines[2].substringAfter("= ").split(" ").map { it }.let { (l, m, r) ->
         Expression(
