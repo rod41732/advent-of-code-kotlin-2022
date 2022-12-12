@@ -41,7 +41,7 @@ fun main() {
                 when (char) {
                     'S' -> 0
                     'E' -> 25
-                    else -> (char.lowercaseChar() - 'a').toInt()
+                    else -> (char.lowercaseChar() - 'a')
                 }
             }
             listOf(Int.MAX_VALUE) + heights + Int.MAX_VALUE
@@ -80,7 +80,7 @@ fun main() {
                 when (char) {
                     'S' -> 0
                     'E' -> 25
-                    else -> (char.lowercaseChar() - 'a').toInt()
+                    else -> (char.lowercaseChar() - 'a')
                 }
             }
             listOf(Int.MAX_VALUE) + heights + Int.MAX_VALUE
