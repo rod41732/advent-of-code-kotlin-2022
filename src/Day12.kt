@@ -2,6 +2,48 @@ import java.util.*
 
 private typealias Coord = Pair<Int, Int>
 
+
+fun main() {
+    val input = readInput("Day12")
+    val inputTest = readInput("Day12_test")
+
+    fun part1(input: List<String>): Int {
+        val mapRaw = input.map { it.toList() }
+        val start = mapRaw.findIndex2D('S').first()
+        val end = mapRaw.findIndex2D('E').first()
+
+        val map = mapRaw.map { row -> row.map(::calculateHeight) }
+        return bfsDistance(listOf(start), map, end)
+    }
+
+    fun part2(input: List<String>): Int {
+        val mapRaw = input.map { it.toList() }
+        val starts = mapRaw.findIndex2D { it == 'S' || it == 'a' }.toList()
+        val end = mapRaw.findIndex2D('E').first()
+
+        val map = mapRaw.map { row -> row.map(::calculateHeight) }
+        return bfsDistance(starts, map, end)
+    }
+
+    println(part1(inputTest))
+    check(part1(inputTest) == 31)
+    println(part2(inputTest))
+    check(part2(inputTest) == 29)
+
+    println("Part 1")
+    println(part1(input))
+    println("Part 2")
+    println(part2(input))
+}
+
+private fun calculateHeight(code: Char): Int {
+    return when (code) {
+        'S' -> 0
+        'E' -> 25
+        else -> code - 'a'
+    }
+}
+
 private fun Coord.adjacents(): List<Coord> {
     return listOf(
         first to second + 1,
@@ -21,106 +63,41 @@ private fun <T> List<List<T>>.getAt(pos: Coord): T {
     return this[x][y]
 }
 
-fun main() {
-    val input = readInput("Day12")
-    val inputTest = readInput("Day12_test")
+private fun bfsDistance(starts: List<Coord>, map: List<List<Int>>, end: Coord): Int {
+    val height = map.size
+    val width = map.first().size
 
-    fun part1(input: List<String>): Int {
-        val startPos = input.indexOfFirst { it.contains('S') }.let {
-            it to input[it].indexOf('S')
-        }.let { (x, y) -> x + 1 to y + 1 }
-        val endPos = input.indexOfFirst { it.contains('E') }.let {
-            it to input[it].indexOf('E')
-        }.let { (x, y) -> x + 1 to y + 1 }
+    val dist = MutableList(map.size) { MutableList(map[0].size) { Int.MAX_VALUE } }
+    starts.forEach { dist.setAt(it, 0) }
+    val q: Queue<Coord> = LinkedList(starts)
 
-        val cols = input[0].length + 2
-        val paddingRow = listOf(List(cols) { Int.MAX_VALUE })
+    while (!q.isEmpty()) {
+        val pos = q.remove()
+        val currentDist = dist.getAt(pos)
+        val currentHeight = map.getAt(pos)
+//        println("at: $pos dist: $currentDist height: ${map.getAt(pos)}")
+        if (pos == end) break
 
-        val map = paddingRow + input.map { row ->
-            val heights = row.map { char ->
-                when (char) {
-                    'S' -> 0
-                    'E' -> 25
-                    else -> (char.lowercaseChar() - 'a')
-                }
-            }
-            listOf(Int.MAX_VALUE) + heights + Int.MAX_VALUE
-        } + paddingRow
+        pos.adjacents().forEach { nextPos ->
+            if (!(0 until height).contains(nextPos.first)) return@forEach
+            if (!(0 until width).contains(nextPos.second)) return@forEach
+//            println("possible next $nextPos ${map.getAt(nextPos)}")
+            if (map.getAt(nextPos) > currentHeight + 1) return@forEach
+//            println("possible next $nextPos")
 
-        val minDist = MutableList(map.size) { MutableList(cols) { Int.MAX_VALUE } }
-        minDist.setAt(startPos, 0)
-
-        val q: Queue<Pair<Coord, Int>> = LinkedList()
-        q.add(startPos to 0)
-        while (!q.isEmpty()) {
-            val (pos, dist) = q.remove()
-            val currentHeight = map.getAt(pos)
-            if (pos == endPos) break
-            pos.adjacents().forEach { nextPos ->
-                if (map.getAt(nextPos) > currentHeight + 1) return@forEach
-                if (minDist.getAt(nextPos) > dist + 1) {
-                    minDist.setAt(nextPos, dist + 1)
-                    q.add(nextPos to dist + 1)
-                }
+            if (dist.getAt(nextPos) == Int.MAX_VALUE) {
+                dist.setAt(nextPos, currentDist + 1)
+                q.add(nextPos)
             }
         }
-        return minDist.getAt(endPos)
     }
+    return dist.getAt(end)
+}
 
-    fun part2(input: List<String>): Int {
-        val endPos = input.indexOfFirst { it.contains('E') }.let {
-            it to input[it].indexOf('E')
-        }.let { (x, y) -> x + 1 to y + 1 }
+private fun <T> List<List<T>>.findIndex2D(elem: T): Sequence<Coord> = sequence {
+    forEachIndexed { i, row -> row.forEachIndexed { j, value -> if (value == elem) yield(i to j) } }
+}
 
-        val cols = input[0].length + 2
-        val paddingRow = listOf(List(cols) { Int.MAX_VALUE })
-
-        val map = paddingRow + input.map { row ->
-            val heights = row.map { char ->
-                when (char) {
-                    'S' -> 0
-                    'E' -> 25
-                    else -> (char.lowercaseChar() - 'a')
-                }
-            }
-            listOf(Int.MAX_VALUE) + heights + Int.MAX_VALUE
-        } + paddingRow
-
-        val minDist = MutableList(map.size) { MutableList(cols) { Int.MAX_VALUE } }
-
-        val q: Queue<Pair<Coord, Int>> = LinkedList()
-        map.forEachIndexed { i, row ->
-            row.forEachIndexed { j, height ->
-                if (height == 0) {
-                    minDist.setAt(i to j, 0)
-                    q.add(Pair(i, j) to 0)
-                }
-            }
-        }
-
-        while (!q.isEmpty()) {
-            val (pos, dist) = q.remove()
-            val currentHeight = map.getAt(pos)
-            if (pos == endPos) break
-            pos.adjacents().forEach { nextPos ->
-                if (map.getAt(nextPos) > currentHeight + 1) return@forEach
-                if (minDist.getAt(nextPos) > dist + 1) {
-                    minDist.setAt(nextPos, dist + 1)
-                    q.add(nextPos to dist + 1)
-                }
-            }
-        }
-        return minDist.getAt(endPos)
-    }
-
-    println(part1(inputTest))
-    check(part1(inputTest) == 31)
-    println(part2(inputTest))
-    check(part2(inputTest) == 29)
-
-    println("Part 1")
-    println(part1(input))
-    println("Part 2")
-    println(part2(input))
-
+private fun <T> List<List<T>>.findIndex2D(pred: (T) -> Boolean): Sequence<Coord> = sequence {
+    forEachIndexed { i, row -> row.forEachIndexed { j, value -> if (pred(value)) yield(i to j) } }
 }
