@@ -1,54 +1,42 @@
-data class D13Node(val value: Int?, val children: MutableList<D13Node> = mutableListOf(), val parent: D13Node? = null): Comparable<D13Node> {
-    // convenient function to create node and also add to parent
-    companion object {
-        fun makeLeaf(parent: D13Node?, value: Int) = D13Node(value, parent = parent).also { parent?.addChildren(it) }
-        fun makeList(parent: D13Node?) = D13Node(null, parent = parent).also { parent?.addChildren(it) }
-    }
+import javax.swing.plaf.ColorUIResource
 
-    // Comparable<T> interface
-    override fun compareTo(other: D13Node): Int {
-        if (value == null) {
-            // list
-            val other = other.ensureRooted()
-            val listCmp =
-                children.zip(other.children) { left, right -> left.compareTo(right) }.firstOrNull { it != 0 } ?: 0
-            return when (listCmp) {
-                0 -> children.size.compareTo(other.children.size)
-                else -> listCmp
-            }
-
-        } else {
-            // elem
-            return when (other.value) {
-                null -> ensureRooted().compareTo(other)
-                else -> value.compareTo(other.value)
-            }
+private sealed class Packet {
+    data class PacketList(
+        val parent: PacketList?,
+        val children: MutableList<Packet> = mutableListOf()
+    ) :
+        Packet(), Comparable<PacketList> {
+        override fun compareTo(other: PacketList): Int {
+            val elementCmp = children.asSequence()
+                .zip(other.children.asSequence()) { left, right -> left.compareTo(right) }
+                .firstOrNull { it != 0 }
+            return elementCmp ?: children.size.compareTo(other.children.size)
         }
 
-    }
-
-    private fun ensureRooted(): D13Node {
-        if (value == null) return this
-        return D13Node(null, mutableListOf(this))
-    }
-
-    fun addChildren(node: D13Node) {
-        if (value != null) throw IllegalStateException("Cannot add child since this is not a list")
-        children.add(node)
-    }
-
-    // for debugging
-    fun print(indent: Int = 0) {
-        if (value == null) {
-            println("  ".repeat(indent) + "List (${children.size})")
-            children.forEach { it.print(indent + 1)}
+        fun addElement(value: Int) { children.add(PacketNumber(value)) }
+        fun addList(): PacketList = PacketList(this).also { children.add(it) }
+        override fun print(indent: Int) {
+            println("  ".repeat(indent)  + "List (${children.size} elements)")
         }
-        else {
-            println("  ".repeat(indent) + "Item: $value")
-        }
-
     }
+
+    data class PacketNumber(val value: Int) : Packet(), Comparable<PacketNumber> {
+        override fun compareTo(other: PacketNumber): Int = value.compareTo(other.value)
+        override fun print(indent: Int) {
+            println("  ".repeat(indent)  + "Item: $value")
+        }
+    }
+
+    fun compareTo(other: Packet): Int {
+        if (this is PacketList || other is PacketList) return this.asPacketList().compareTo(other.asPacketList())
+        return (this as PacketNumber).compareTo(other as PacketNumber)
+    }
+
+    fun asPacketList(): PacketList = if (this is PacketList) this else PacketList(null, mutableListOf(this))
+
+    abstract fun print(indent: Int = 0)
 }
+
 
 
 fun main() {
@@ -57,27 +45,26 @@ fun main() {
 
     fun part1(input: List<String>): Int {
         return input.chunked(3)
-            .map { it.take(2).map(::parseList)}
-            .map { (left, right) -> left.compareTo(right)}
+            .map { it.take(2).map(::parseList) }
+            .map { (left, right) -> left.compareTo(right) }
             .withIndex()
             .filter { (_, cmp) -> cmp == -1 }
-            .map { (idx, ) -> idx + 1}
+            .map { (idx) -> idx + 1 }
 //            .also { println("correct order: $it ")}
             .sum()
     }
 
     fun part2(input: List<String>): Int {
-        val div1 = parseList("[[2]]")
-        val div2 = parseList("[[6]]")
+        val dividers = listOf(
+            parseList("[[2]]"),
+            parseList("[[6]]")
+        )
         val all = input
-            .filter { it.isNotBlank()}
+            .filter { it.isNotBlank() }
             .map(::parseList)
-            .plus(listOf(div1, div2))
+            .plus(dividers)
             .sorted()
-        val div1Index = all.binarySearch(div1) + 1
-        val div2Index = all.binarySearch(div2) + 1
-        println("$div1Index $div2Index")
-        return div1Index * div2Index
+        return dividers.map { all.binarySearch(it) + 1} .reduce { acc, i -> acc * i  }
 
 
     }
@@ -88,39 +75,38 @@ fun main() {
     check(part2(testInput) == 140)
 
     println("Part1")
-    println(part1(input))
+    println(part1(input)) // 6428
 
     println("Part2")
-    println(part2(input))
+    println(part2(input)) // 22464
 
 }
 
-fun parseList(inp: String): D13Node {
-    val root = D13Node.makeList(null)
-    var cur = root
-    var currentNum = 0
-    var hasNum = false
+private data class NumberBuilder(var currentNum: Int = 0, var hasNum: Boolean = false) {
+    fun addDigit(digit: Int) {
+        currentNum =  currentNum * 10 + digit
+        hasNum = true
+    }
+    fun collectNumber() = if (hasNum) currentNum.also { hasNum = false } else null
+}
+private fun parseList(inp: String): Packet.PacketList {
+    val root = Packet.PacketList(null)
+    var currentList = root
+    val numberBuilder = NumberBuilder()
+
     inp.forEach {
         when (it) {
-            '[' -> {
-                cur = D13Node.makeList(cur)
-            }
-
+            '[' -> currentList = currentList.addList()
             ']' -> {
-                if (hasNum) {D13Node.makeLeaf(cur, currentNum); currentNum = 0; hasNum = false}
-                cur = cur.parent!!
+                numberBuilder.collectNumber()?.also { currentList.addElement(it) }
+                currentList = currentList.parent!!
             }
-            ',' -> {
-                if (hasNum) {
-                    D13Node.makeLeaf(cur, currentNum)
-                    currentNum = 0
-                    hasNum = false
-                }
-            }
-            else -> (it - '0').also { currentNum = currentNum * 10 + it; hasNum = true }
+            ',' -> numberBuilder.collectNumber()?.also { currentList.addElement(it) }
+
+            else -> numberBuilder.addDigit(it - '0')
         }
     }
-    return root.children[0]
+    return root.children[0] as Packet.PacketList
 }
 
 
