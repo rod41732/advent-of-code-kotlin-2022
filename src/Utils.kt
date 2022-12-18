@@ -3,6 +3,7 @@ import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.system.measureNanoTime
 
+typealias Coord = Pair<Int, Int>
 /**
  * Reads lines from the given input txt file.
  */

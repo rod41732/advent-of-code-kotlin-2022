@@ -1,6 +1,5 @@
 import java.util.*
 
-private typealias Coord = Pair<Int, Int>
 
 
 fun main() {
