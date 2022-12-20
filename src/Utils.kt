@@ -46,3 +46,16 @@ fun measureAvgTime(sampleSizes: List<Int> = listOf(1, 10, 100, 1000), block: () 
         } / 1e6 / count
     })
 }
+
+inline fun repeat(n: Long, block: (idx: Long) -> Unit) {
+    val m = n.mod(Int.MAX_VALUE).toLong()
+    val full = n - m
+    repeat ((n / Int.MAX_VALUE.toLong()).toInt()) { high ->
+        repeat(Int.MAX_VALUE) { low ->
+            block(high.toLong() * Int.MAX_VALUE + low)
+        }
+    }
+    repeat(m.toInt()) {
+        block(full + it)
+    }
+}
