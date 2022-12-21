@@ -56,7 +56,6 @@ fun main() {
         cur[startIndex][0] = 0 // first position
 
         repeat(30) {
-            println("loop $it")
             cur.forEachIndexed { position, states ->
                 states.forEachIndexed { state, value ->
                     if (value != Int.MIN_VALUE) {
@@ -116,7 +115,6 @@ fun main() {
         cur[encode(startIndex, startIndex)][0] = 0 // first position
 
         repeat(26) { time ->
-            println("loop $time")
             cur.forEachIndexed { enc, states ->
                 states.forEachIndexed { state, value ->
                     if (value != Int.MIN_VALUE) {
@@ -147,7 +145,7 @@ fun main() {
     val input = readInput("Day16")
     println(part1(input))
     // WARNING: VERY LONG RUN TIME
-    println(part2(input))
+//    println(part2(input))
 
 }
 
