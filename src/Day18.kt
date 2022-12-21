@@ -65,7 +65,7 @@ private fun surfaceArea(cubes: List<Point3D>): Int {
     cubes.forEach {
         surface += 6
         // subtract touching surfaces
-        surface -= it.adjacentPoints().count { adj -> adj in cubes } * 2
+        surface -= it.adjacentPoints().count { adj -> adj in processed } * 2
         processed.add(it)
     }
     return surface
@@ -98,6 +98,7 @@ fun main() {
     }
 
     val testInput = readInput("Day18_test")
+    println(part1(testInput))
     check(part1(testInput) == 64)
     check(part2(testInput) == 58)
 
