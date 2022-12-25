@@ -28,9 +28,9 @@ fun main() {
 private fun MutableList<IndexedValue<Long>>.mix() {
     repeat(size) { i ->
         val idx = indexOfFirst { it.index == i }
-        val item = removeAt(idx)
-        val newIndex = (idx + item.value).mod(size)
-        add(newIndex, item)
+        removeAt(idx).let { item ->
+            add(index = (idx + item.value).mod(size), item)
+        }
     }
 }
 
