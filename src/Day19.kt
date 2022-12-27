@@ -1,6 +1,6 @@
-import java.util.*
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.system.measureTimeMillis
 
 
 data class Resource(
@@ -36,86 +36,99 @@ data class Resource(
     }
 }
 
-fun divHelper(a: Int, b: Int): Int {
-    if (a == b && b == 0) return 0
-    if (a != 0 && b == 0) throw Error("Divide by zero")
-    return ceil(a / b.toFloat()).toInt()
+inline fun divHelper(a: Int, b: Int): Int {
+    if (a <= 0) return 0
+    if (b == 0) throw Error("Divide by zero")
+    return ceil(a.toFloat() / b.toFloat()).toInt()
 }
 
 data class State(
     val machine: Resource = Resource(), val resource: Resource = Resource(), val time: Int = 0, val blueprint: Blueprint
 ) {
+    fun canGetAtLeastOneGeode(maxTime: Int): Boolean {
+        if (machine.clay == 0) return time <= maxTime - 4
+        if (machine.obsidian == 0) return time <= maxTime - 3
+        if (machine.geode == 0) return time <= maxTime - 2
+        return true
+    }
 
-    fun nextStates() = sequence<State> {
-        val oreWait = waitTime(blueprint.oreCost)
-        if (oreWait != -1) {
-            val newTime = time + oreWait + 1
-            if (newTime <= 24) {
-                yield(
-                    copy(
-                        time = newTime,
-                        resource = resource + (machine * (oreWait + 1)) - blueprint.oreCost,
-                        machine = machine.copy(ore = machine.ore + 1)
-                    )
-                )
+    fun wastefulToBuildMoreOre(): Boolean = listOf(
+        blueprint.oreCost.ore, blueprint.clayCost.ore, blueprint.obsidianCost.ore, blueprint.geodeCost.ore
+    ).max().let { mx ->
+        machine.ore >= mx && resource.ore >= mx
+    }
 
-            }
-        }
+    fun wastefulToBuildMoreClay(): Boolean = blueprint.obsidianCost.clay.let { mx ->
+        machine.clay >= mx && resource.clay >= mx
+    }
 
-        val clayWait = waitTime(blueprint.clayCost)
-        if (clayWait != -1) {
-            val newTime = time + clayWait + 1
-            val op = clayWait != 0 && (resource + machine * clayWait).let { future ->
-                listOf(blueprint.oreCost, blueprint.obsidianCost, blueprint.geodeCost).any {
-                    future.canAfford(it)
-                }
-            }
-            if (!op) {
-                if (newTime <= 24) {
-                    yield(
-                        copy(
-                            time = newTime,
-                            resource = resource + (machine * (clayWait + 1)) - blueprint.clayCost,
-                            machine = machine.copy(clay = machine.clay + 1)
+    fun wastefulToBuildMoreObsidian(): Boolean = blueprint.geodeCost.obsidian.let { mx ->
+        machine.obsidian >= mx && resource.obsidian >= mx
+    }
+
+    inline fun bestNextStates(maxTime: Int, block: (State) -> Int): Int {
+        return sequence {
+            if (!canGetAtLeastOneGeode(maxTime = maxTime)) return@sequence
+//        {
+            if (!wastefulToBuildMoreOre()) {
+                val oreWait = waitTime(blueprint.oreCost)
+                if (oreWait != -1) {
+                    val newTime = time + oreWait + 1
+                    if (newTime < maxTime) {
+                        yield(
+                            copy(
+                                time = newTime,
+                                resource = resource + (machine * (oreWait + 1)) - blueprint.oreCost,
+                                machine = machine.copy(ore = machine.ore + 1)
+                            )
                         )
-                    )
+
+                    }
                 }
             }
+//        }();
 
-
-        }
-
-        val obsidianWait = waitTime(blueprint.obsidianCost)
-        if (obsidianWait != -1) {
-            val newTime = time + obsidianWait + 1
-            val op = obsidianWait != 0 && (resource + machine * obsidianWait).let { future ->
-                listOf(blueprint.oreCost, blueprint.clayCost, blueprint.geodeCost).any {
-                    future.canAfford(it)
-                }
-            }
-            if (!op) {
-                if (newTime <= 24) {
-                    yield(
-                        copy(
-                            time = newTime,
-                            resource = resource + (machine * (obsidianWait + 1)) - blueprint.obsidianCost,
-                            machine = machine.copy(obsidian = machine.obsidian + 1)
+//        {
+            if (!wastefulToBuildMoreClay()) {
+                val clayWait = waitTime(blueprint.clayCost)
+                if (clayWait != -1) {
+                    val newTime = time + clayWait + 1
+                    if (newTime < maxTime) {
+                        yield(
+                            copy(
+                                time = newTime,
+                                resource = resource + (machine * (clayWait + 1)) - blueprint.clayCost,
+                                machine = machine.copy(clay = machine.clay + 1)
+                            )
                         )
-                    )
+                    }
                 }
             }
-        }
+//        }();
 
-        val geodeWait = waitTime(blueprint.geodeCost)
-        if (geodeWait != -1) {
-            val newTime = time + geodeWait + 1
-            val op = geodeWait != 0 && (resource + machine * obsidianWait).let { future ->
-                listOf(blueprint.oreCost, blueprint.clayCost, blueprint.obsidianCost).any {
-                    future.canAfford(it)
+//        {
+            if (!wastefulToBuildMoreObsidian()) {
+                val obsidianWait = waitTime(blueprint.obsidianCost)
+                if (obsidianWait != -1) {
+                    val newTime = time + obsidianWait + 1
+                    if (newTime < maxTime) {
+                        yield(
+                            copy(
+                                time = newTime,
+                                resource = resource + (machine * (obsidianWait + 1)) - blueprint.obsidianCost,
+                                machine = machine.copy(obsidian = machine.obsidian + 1)
+                            )
+                        )
+                    }
                 }
             }
-            if (!op) {
-                if (newTime <= 24) {
+//        }();
+
+//        (suspend {
+            val geodeWait = waitTime(blueprint.geodeCost)
+            if (geodeWait != -1) {
+                val newTime = time + geodeWait + 1
+                if (newTime < maxTime) {
                     yield(
                         copy(
                             time = time + geodeWait + 1,
@@ -126,24 +139,28 @@ data class State(
                 }
 
             }
+//        })();
+        }.maxOfOrNull { block(it) } ?: -1
+    }
+
+
+
+    inline fun waitTime(targetResource: Resource): Int {
+        return runCatching {
+            listOf(
+                divHelper(targetResource.ore - resource.ore, machine.ore),
+                divHelper(targetResource.clay - resource.clay, machine.clay),
+                divHelper(targetResource.obsidian - resource.obsidian, machine.obsidian),
+            ).max()
+        }.let {
+            val res = it.getOrNull()
+            if (res == null) -1
+            else max(res, 0)
         }
     }
 
-
-    private fun waitTime(targetResource: Resource): Int {
-        return runCatching {
-            max(
-                listOf(
-                    divHelper(targetResource.ore - resource.ore, machine.ore),
-                    divHelper(targetResource.clay - resource.clay, machine.clay),
-                    divHelper(targetResource.obsidian - resource.obsidian, machine.obsidian),
-                ).max(), 0
-            )
-        }.getOrDefault(-1)
-    }
-
-    fun maxGeodeIfWait(): Int {
-        return resource.geode + (time - 24) * machine.geode
+    fun maxGeodeIfWait(maxTime: Int): Int {
+        return resource.geode + (maxTime - time) * machine.geode
     }
 }
 
@@ -154,49 +171,57 @@ data class Blueprint(
     val obsidianCost: Resource,
     val geodeCost: Resource,
 ) {
-    fun qualityLevel(): Int = id * maxGeode()
-    fun maxGeode(): Int {
-        val q: Queue<State> = LinkedList();
-        q.add(State(machine = Resource(ore = 1), blueprint = this))
-        var ans = 0
-        while (!q.isEmpty()) {
-            val s = q.remove()
-            if (s.time > 24) continue
-            ans = max(ans, s.maxGeodeIfWait())
-            s.nextStates().forEach { q.add(it) }
+    fun qualityLevel(maxTime: Int): Int = id * maxGeode(maxTime)
+    fun maxGeode(maxTime: Int): Int {
+        fun best(fromState: State): Int {
+            return max(fromState.maxGeodeIfWait(maxTime), fromState.bestNextStates(maxTime) { best(it) })
         }
-        return ans
+        return best(State(machine = Resource(ore = 1), blueprint = this))
     }
 }
 
-fun parseBlueprint(line: String): Blueprint = throw NotImplementedError("XD")
+val re =
+    Regex("""Blueprint (\d+): Each ore robot costs (\d+) ore. Each clay robot costs (\d+) ore. Each obsidian robot costs (\d+) ore and (\d+) clay. Each geode robot costs (\d+) ore and (\d+) obsidian.""")
+
+fun parseBlueprint(line: String): Blueprint {
+    val nums = re.find(line)!!.groupValues.drop(1).map { it.toInt() }
+    return Blueprint(
+        id = nums[0],
+        oreCost = Resource(ore = nums[1]),
+        clayCost = Resource(ore = nums[2]),
+        obsidianCost = Resource(ore = nums[3], clay = nums[4]),
+        geodeCost = Resource(ore = nums[5], obsidian = nums[6]),
+    )
+}
+
 
 fun main() {
-    fun part1(input: List<String>): Int = input.map(::parseBlueprint).map { it.qualityLevel() }.sum()
+    fun part1(input: List<String>): Int = input.map(::parseBlueprint).map { bp ->
+        var x = 0;
+//            measureTimeMillis {
+        x = bp.qualityLevel(maxTime = 24)
+//            }.let { println("Blueprint ${bp.id} ql = $x maxGeode = ${x / bp.id}, took $it millis") }
+        x
+    }.sum()
 
-    val bp1 = Blueprint(
-        id = 1,
-        oreCost = Resource(ore = 4),
-        clayCost = Resource(ore = 2),
-        obsidianCost = Resource(ore = 3, clay = 14),
-        geodeCost = Resource(ore = 2, obsidian = 7)
-    )
-    measureAvgTime(sampleSizes = listOf(1)) {
-        println(bp1.qualityLevel())
-    }.forEach { (c, v) -> println("took $v seconds") }
-    check(bp1.qualityLevel() == 9)
+    fun part2(input: List<String>): Int = input.map(::parseBlueprint).take(3).map { bp ->
+        var x = 0;
+        measureTimeMillis {
+            x = bp.maxGeode(maxTime = 32)
+        }.let { println("Blueprint ${bp.id} maxGeode = ${x}, took $it millis") }
+        x
+    }.reduce {acc, it -> acc * it}
 
-    val bp2 = Blueprint(
-        id = 2,
-        oreCost = Resource(ore = 2),
-        clayCost = Resource(ore = 3),
-        obsidianCost = Resource(ore = 3, clay = 8),
-        geodeCost = Resource(ore = 3, obsidian = 12)
-    )
-    measureAvgTime(sampleSizes = listOf(1)) {
-        println(bp2.qualityLevel())
-    }.forEach { (c, v) -> println("took $v seconds") }
-//    check(bp2.qualityLevel() == 12 * 2)
+    val testInput = readInput("Day19_test")
+    println(part1(testInput))
+    check(part1(testInput) == 33)
+
+    val input = readInput("Day19")
+    println("Part 1")
+    println(part1(input)) // 1365
+    // took about 20 seconds
+    println("Part 2")
+    println(part2(input)) // 4864
 
 
 }
