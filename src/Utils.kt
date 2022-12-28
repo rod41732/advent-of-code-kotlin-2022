@@ -4,6 +4,7 @@ import java.security.MessageDigest
 import kotlin.system.measureNanoTime
 
 typealias Coord = Pair<Int, Int>
+
 /**
  * Reads lines from the given input txt file.
  */
@@ -50,7 +51,7 @@ fun measureAvgTime(sampleSizes: List<Int> = listOf(1, 10, 100, 1000), block: () 
 inline fun repeat(n: Long, block: (idx: Long) -> Unit) {
     val m = n.mod(Int.MAX_VALUE).toLong()
     val full = n - m
-    repeat ((n / Int.MAX_VALUE.toLong()).toInt()) { high ->
+    repeat((n / Int.MAX_VALUE.toLong()).toInt()) { high ->
         repeat(Int.MAX_VALUE) { low ->
             block(high.toLong() * Int.MAX_VALUE + low)
         }
@@ -58,4 +59,13 @@ inline fun repeat(n: Long, block: (idx: Long) -> Unit) {
     repeat(m.toInt()) {
         block(full + it)
     }
+}
+
+
+fun <T> List<T>.chunkBy(pred: (T) -> Boolean): List<List<T>> {
+    return fold(mutableListOf(mutableListOf<T>())) { acc, it ->
+        if (pred(it)) acc.last().add(it)
+        else acc.add(mutableListOf<T>())
+        acc
+    }.filter { it.isNotEmpty() }
 }
