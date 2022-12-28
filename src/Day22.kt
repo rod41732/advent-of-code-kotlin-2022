@@ -10,7 +10,12 @@ fun ListPos.prev() = ListPos(
 
 fun ListPos.toCoord() = first[second]
 
-private inline fun <T> List<List<T>>.getXD(r: Int, c: Int) = this[r][c]
+private fun <T> List<List<T>>.getXD(r: Int, c: Int): T {
+    // for debug XD
+    println("$r $c")
+    val row = this[r]
+    return row[c]
+}
 data class Map(val raw: List<List<Char>>) {
     val byRow: MutableMap<Coord2D, ListPos> = mutableMapOf()
     val byCol: MutableMap<Coord2D, ListPos> = mutableMapOf()
@@ -102,26 +107,28 @@ fun Char.oppositeDir() = when (this) {
 }
 
 fun warpPair(l1: List<Coord2D>, dir1: Char, l2: List<Coord2D>, dir2: Char): List<Pair<PlayerState, PlayerState>> {
-    return  l1.pairWith(dir1).zip(l2.pairWith(dir2))
+    return  l1.pairWith(dir1).zip(l2.pairWith(dir2)) + l2.pairWith(dir2.oppositeDir()).zip(l1.pairWith(dir1.oppositeDir()))
 }
 
 
 val warpMap = listOf(
-    warpPair(coordRange(50 until 100, 0), '^', coordRange(0, 150 until 200), '>'),
+    warpPair(coordRange(50 until 100, 0), '^', coordRange(49, 150 until 200), '<'),
     warpPair(coordRange(50, 0 until 50), '<', coordRange(0, 100 until 150), '>'),
-    warpPair(coordRange(50, 50 until 100), '<', coordRange(0 until 50, 100), 'V'),
+    warpPair(coordRange(100 until 150, 49), 'V', coordRange(99, 50 until 100), '<'),
     warpPair(coordRange(100 until 150, 0), '^', coordRange(0 until 50, 199), '^'),
     warpPair(coordRange(149, 0 until 50), '>', coordRange(99, 100 until 150), '<'),
-    warpPair(coordRange(100 until 150, 49), 'V', coordRange(99, 50 until 100), '<'),
-    warpPair(coordRange(50 until 100, 149), 'V', coordRange(49, 150 until 200), '<'),
-).reduce {acc, it -> acc + it}.toMap()
+    warpPair(coordRange(50, 50 until 100), '<', coordRange(0 until 50, 100), 'V'),
+    warpPair(coordRange(0, 150 until 200), '<', coordRange(50 until 100, 149), '^'),
+
+
+    ).reduce {acc, it -> acc + it}.toMap()
 
 fun move(coord: Coord2D, facing: Char): Coord2D {
     return when (facing) {
         '^' -> coord.copy(y = coord.y - 1)
         'V' -> coord.copy(y = coord.y + 1)
-        '<' -> coord.copy(y = coord.x - 1)
-        '>' -> coord.copy(y = coord.x + 1)
+        '<' -> coord.copy(x = coord.x - 1)
+        '>' -> coord.copy(x = coord.x + 1)
         else -> throw Error("Invalid direction to move")
     }
 }
