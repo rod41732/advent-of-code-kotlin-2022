@@ -12,7 +12,6 @@ fun ListPos.toCoord() = first[second]
 
 private fun <T> List<List<T>>.getXD(r: Int, c: Int): T {
     // for debug XD
-    println("$r $c")
     val row = this[r]
     return row[c]
 }
@@ -93,8 +92,8 @@ private val splitter = Regex("(\\d+)|L|R")
 typealias PlayerState = Pair<Coord2D, Char>
 
 
-fun coordRange(xRange: IntRange, y: Int) = xRange.map { Coord2D(it, y )}
-fun coordRange(x: Int, yRange: IntRange) = yRange.map { Coord2D(x, it)}
+fun coordRange(xRange: Iterable<Int>, y: Int) = xRange.map { Coord2D(it, y )}
+fun coordRange(x: Int, yRange: Iterable<Int>) = yRange.map { Coord2D(x, it)}
 
 fun <T, U> List<T>.pairWith(o: U) = this.map { it to o }
 
@@ -112,15 +111,13 @@ fun warpPair(l1: List<Coord2D>, dir1: Char, l2: List<Coord2D>, dir2: Char): List
 
 
 val warpMap = listOf(
-    warpPair(coordRange(50 until 100, 0), '^', coordRange(49, 150 until 200), '<'),
-    warpPair(coordRange(50, 0 until 50), '<', coordRange(0, 100 until 150), '>'),
+    warpPair(coordRange(50, 0 until 50), '<', coordRange(0, (100 until 150).reversed()), '>'),
+    warpPair(coordRange(50 until 100, 0), '^', coordRange(0, 150 until 200), '>'),
+    warpPair(coordRange(100 until 150, 0), '^', coordRange(0 until 150, 199), '^'),
+    warpPair(coordRange(149, 0 until 50), '>', coordRange(99, 100 until 150).reversed(), '<'),
     warpPair(coordRange(100 until 150, 49), 'V', coordRange(99, 50 until 100), '<'),
-    warpPair(coordRange(100 until 150, 0), '^', coordRange(0 until 50, 199), '^'),
-    warpPair(coordRange(149, 0 until 50), '>', coordRange(99, 100 until 150), '<'),
     warpPair(coordRange(50, 50 until 100), '<', coordRange(0 until 50, 100), 'V'),
-    warpPair(coordRange(0, 150 until 200), '<', coordRange(50 until 100, 149), '^'),
-
-
+    warpPair(coordRange(50 until 100, 149), 'V', coordRange(49, 150 until 200), '<'),
     ).reduce {acc, it -> acc + it}.toMap()
 
 fun move(coord: Coord2D, facing: Char): Coord2D {
@@ -205,13 +202,11 @@ fun main() {
                 is TurnInstruction -> {
                     val facing = turn(state.second, it.turn)
                     state = state.first to facing
-                    println("turned ${it.turn} now facing ${facing}")
                 }
             }
         }
         val coord = state.first
         val facing = state.second
-        println("final row = ${coord.y + 1} col = ${coord.x + 1} facing = $facing (${facings.indexOf(facing)})")
         return 1000 * (coord.y + 1) + 4 * (coord.x + 1) + facings.indexOf(facing)
     }
 
@@ -223,6 +218,6 @@ fun main() {
     println("Part 1")
     println(part1(input))
     println("Part 2")
-    println(part2(input))
+    println(part2(input)) //
 }
 
