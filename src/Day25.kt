@@ -1,35 +1,10 @@
-fun digitToNum(digit: Char): Int = when (digit) {
-    '-' -> -1
-    '=' -> -2
-    else -> digit - '0'
-}
-
-fun toSNAFU(x: Long): String = buildList {
-    var p = x
-    while (p != 0L) {
-        val rem = p.mod(5)
-        p /= 5
-        when (rem) {
-            in 0..2 -> add(rem.toString())
-            3 -> {
-                add("=")
-                p++
-            }
-
-            4 -> {
-                add("-")
-                p++
-            }
-        }
-
-    }
-}.asReversed().joinToString("")
 
 
 fun main() {
     fun part1(input: List<String>): String {
-        return toSNAFU(input.map(::parseSNAFU)
-            .sum())
+        return toSNAFU(
+            input.map(::parseSNAFU).sum()
+        )
     }
 
     val testInput = readInput("Day25_test")
@@ -46,9 +21,34 @@ fun main() {
 
     val input = readInput("Day25")
     println("Part 1")
-    println(part1(input))
-    // 33010101016442
-
+    println(part1(input)) // 33010101016442
+    // there's no Part 2 for Day25
 }
 
-private fun parseSNAFU(digits: String): Long = digits.map { digitToNum(it) }.fold(0L) { acc, v -> acc * 5 + v }
+private fun Char.digitValue(): Int = when (this) {
+    '0', '1', '2' -> this - '0'
+    '-' -> -1
+    '=' -> -2
+    else -> throw Error("Invalid digit")
+}
+
+private fun parseSNAFU(digits: String): Long = digits.map { it.digitValue() }.fold(0L) { acc, v -> acc * 5 + v }
+
+private fun Int.toDigit(): Pair<Char, Int> = when (this) {
+    0, 1, 2 -> '0' + this to 0 // n = 5(0) + n
+    3 -> '=' to 1 // 3 = 5(1) - 2
+    4 -> '-' to 1 // 4 = 5(1) - 1
+    else -> throw Error("Invalid position number")
+}
+
+private fun toSNAFU(x: Long): String = buildList {
+    var p = x
+    while (p != 0L) {
+        val rem = p.mod(5)
+        p /= 5
+        rem.toDigit().also { (char, carry) ->
+            add(char)
+            p += carry
+        }
+    }
+}.joinToString("").reversed()
