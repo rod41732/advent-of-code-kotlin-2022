@@ -123,7 +123,7 @@ val warpMap = listOf(
 fun move(coord: Coord2D, facing: Char): Coord2D {
     return when (facing) {
         '^' -> coord.copy(y = coord.y - 1)
-        'V' -> coord.copy(y = coord.y + 1)
+        'V', 'v' -> coord.copy(y = coord.y + 1)
         '<' -> coord.copy(x = coord.x - 1)
         '>' -> coord.copy(x = coord.x + 1)
         else -> throw Error("Invalid direction to move")

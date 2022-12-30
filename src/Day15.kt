@@ -6,6 +6,10 @@ data class Coord2D(val x: Int, val y: Int) {
     fun manhattanDistance(other: Coord2D): Int {
         return (x - other.x).absoluteValue + (y - other.y).absoluteValue
     }
+
+    override fun toString(): String {
+        return "($x, $y)"
+    }
 }
 
 
