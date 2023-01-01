@@ -1,10 +1,6 @@
 import kotlin.math.abs
 import kotlin.math.sign
 
-enum class Direction {
-    UP, DOWN, LEFT, RIGHT
-}
-
 data class Knot(var x: Int, var y: Int, var next: Knot? = null) {
     var history = mutableSetOf(0 to 0)
     fun move(dir: Direction, count: Int) {

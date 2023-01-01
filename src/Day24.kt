@@ -1,11 +1,16 @@
 import java.util.*
 
-data class Blizzard(val coord: Coord2D, val direction: Char)
+private data class Blizzard(val coord: Coord2D, val direction: Char)
 
-fun IntRange.wrap(num: Int): Int {
+/** wrap the integer if it goes outside the range e.g.
+ * (1..5).wrap(0) == 5
+ * (1..5).wrap(6) == 1
+ * (1..5).wrap(3) == 1
+ */
+private fun IntRange.wrap(num: Int): Int {
     return first + (num - first).mod(last - first + 1)
 }
-fun progressBlizzard(blizzards: List<Blizzard>, xRange: IntRange, yRange: IntRange): List<Blizzard> {
+private fun progressBlizzard(blizzards: List<Blizzard>, xRange: IntRange, yRange: IntRange): List<Blizzard> {
     return blizzards.map {
         val newCoord = move(it.coord, it.direction).let {
             Coord2D(xRange.wrap(it.x), yRange.wrap(it.y))
@@ -14,7 +19,7 @@ fun progressBlizzard(blizzards: List<Blizzard>, xRange: IntRange, yRange: IntRan
     }
 }
 
-data class PlayerState24(val coord: Coord2D, val time: Int)
+private data class PlayerState24(val coord: Coord2D, val time: Int)
 
 
 private inline fun Coord2D.forEachPossibleMoves(action: (Coord2D) -> Unit) {
@@ -24,10 +29,6 @@ private inline fun Coord2D.forEachPossibleMoves(action: (Coord2D) -> Unit) {
     action(copy(y = y - 1))
     action(copy())
 }
-
-
-
-
 
 fun main() {
     fun findPath(

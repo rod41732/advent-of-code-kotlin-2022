@@ -69,3 +69,7 @@ fun <T> List<T>.chunkBy(pred: (T) -> Boolean): List<List<T>> {
         acc
     }.filter { it.isNotEmpty() }
 }
+
+enum class Direction {
+    UP, DOWN, LEFT, RIGHT
+}
